@@ -6,7 +6,7 @@ using AdventOfCode.Day01;
 var timer = new Stopwatch();
 timer.Start();
 
-var lines = File.ReadAllLines("Day01.txt");
+var lines = File.ReadAllLines("Day01\\input.txt");
 var generator = new AnswerGenerator(lines);
             
 Console.Write("Answer 1: ");

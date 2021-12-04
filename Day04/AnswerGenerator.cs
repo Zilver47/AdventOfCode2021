@@ -129,7 +129,7 @@ namespace AdventOfCode.Day04
         {
             for (var i = 0; i < _rows.GetLength(0); i++)
             {
-                for (var j = 0; j < _rows.GetLength(0); j++)
+                for (var j = 0; j < _rows.GetLength(1); j++)
                 {
                     if (_rows[i,j] == number)
                     {
@@ -145,7 +145,7 @@ namespace AdventOfCode.Day04
             for (var i = 0; i < _rows.GetLength(0); i++)
             {
                 var allMarked = true;
-                for (var j = 0; j < _rows.GetLength(0); j++)
+                for (var j = 0; j < _rows.GetLength(1); j++)
                 {
                     if (!_marked[i, j]) allMarked = false;
                 }
@@ -157,7 +157,7 @@ namespace AdventOfCode.Day04
             for (var i = 0; i < _rows.GetLength(0); i++)
             {
                 var allMarked = true;
-                for (var j = 0; j < _rows.GetLength(0); j++)
+                for (var j = 0; j < _rows.GetLength(1); j++)
                 {
                     if (!_marked[j, i]) allMarked = false;
                 }
@@ -173,7 +173,7 @@ namespace AdventOfCode.Day04
             long result = 0;
             for (var i = 0; i < _rows.GetLength(0); i++)
             {
-                for (var j = 0; j < _rows.GetLength(0); j++)
+                for (var j = 0; j < _rows.GetLength(1); j++)
                 {
                     if (!_marked[i, j])
                     {

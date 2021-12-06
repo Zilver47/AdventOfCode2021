@@ -14,7 +14,7 @@ namespace AdventOfCode.Day01
 
         public long Part1()
         {
-            long result = 0;
+            long result = -1;
 
             var measurements = _input.Select(int.Parse).ToList();
 
@@ -28,7 +28,7 @@ namespace AdventOfCode.Day01
 
         public long Part2()
         {
-            long result = 0;
+            long result = -1;
 
             var measurements = _input.Select(int.Parse).ToList();
 

@@ -10,5 +10,10 @@ namespace AdventOfCode.Extensions
         {
             return source.Select(item => (T)item.Clone()).ToList();
         }
+        
+        public static HashSet<T> Clone<T>(this HashSet<T> source) 
+        {
+            return source.Select(item => item).ToHashSet();
+        }
     }
 }

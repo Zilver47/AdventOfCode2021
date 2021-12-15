@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using AdventOfCode.Extensions;
-using AdventOfCode.Day13;
 
 namespace AdventOfCode.Day15
 {
@@ -17,19 +15,21 @@ namespace AdventOfCode.Day15
 
         public long Part1()
         {
-            long result = -1;
-
             var board = new Board(_input.ToList());
-            
-            result = board.FindPath();
+
+            //board.Print();
+            var result = board.FindPath();
 
             return result;
         }
 
         public long Part2()
         {
-            long result = -1;
+            var board = new Board(_input.ToList());
 
+            board.Enlarge();
+            //board.Print();
+            var result = board.FindPath();
 
             return result;
         }
@@ -40,7 +40,7 @@ namespace AdventOfCode.Day15
         private int[,] _rows;
         private int _maxColumns;
         private int _maxRows;
-        private long _minimalTotalRisk;
+        private bool[,] _visited;
 
         public Board(List<string> lines)
         {
@@ -48,159 +48,169 @@ namespace AdventOfCode.Day15
             _maxColumns = lines[0].Length;
             _rows = new int[_maxRows, _maxColumns];
 
-            for (int row = 0; row < lines.Count; row++)
+            for (var row = 0; row < lines.Count; row++)
             {
                 var line = lines[row];
-                for (int column = 0; column < line.Length; column++)
+                for (var column = 0; column < line.Length; column++)
                 {
                     _rows[row, column] = int.Parse(line[column].ToString());
                 }
             }
-
-            _minimalTotalRisk = long.MaxValue;
-        }
-
-        public void NextMinStep(int row, int column, long totalRisk)
-        {
-            totalRisk += _rows[row, column];
             
-            if (row == _maxColumns -1 && column == _maxRows - 1)
-            {
-                if (totalRisk < _minimalTotalRisk)
-                {
-                    _minimalTotalRisk = totalRisk;
-                    Console.WriteLine(_minimalTotalRisk);
-                }
-                
-                return;
-            }
-
-            var next = GetMinimalAdjacentPoint(row, column);
-            NextMinStep(next.Item1, next.Item2, totalRisk);
-            
-            return;
-        }
-
-        private void FindMin()
-        {
-            var next = GetMinimalAdjacentPoint(0, 0);
-            NextMinStep(next.Item1, next.Item2, 0);
+            _visited = new bool[_maxRows, _maxColumns];
         }
 
         public long FindPath()
         {
-            FindMin();
+            _rows[0, 0] = 0;
 
-            foreach (var adjacentPoint in GetAdjacentPoints(0, 0))
+            var start = new Tile();
+            start.Row = 0;
+            start.Column = 0;
+
+            var finish = new Tile();
+            finish.Row = _maxRows - 1;
+            finish.Column = _maxColumns - 1;
+	
+            var activeTiles = new List<Tile>();
+            activeTiles.Add(start);
+
+            while (activeTiles.Any())
             {
-                var visited = new HashSet<int>();
-                NextStep(adjacentPoint.Item1, adjacentPoint.Item2, visited, 0);
-            }
+                var lowestTotalRisk = activeTiles.Min(x => x.PreviousRisk);
+                var checkTiles = activeTiles.Where(x => x.PreviousRisk == lowestTotalRisk).ToList();
 
-            return _minimalTotalRisk;
-        }
-
-        public void NextStep(int row, int column, HashSet<int> visited, long totalRisk)
-        {
-           // if (visited.Contains(GetPosition(row, column))) return;
-            
-            totalRisk += _rows[row, column];
-
-            if (totalRisk > _minimalTotalRisk) return;
-
-            if (row == _maxColumns -1 && column == _maxRows - 1)
-            {
-                if (totalRisk < _minimalTotalRisk)
+                foreach (var checkTile in checkTiles)
                 {
-                    _minimalTotalRisk = totalRisk;
-                    Console.WriteLine(_minimalTotalRisk);
+                    if (checkTile.Row == finish.Row && checkTile.Column == finish.Column)
+                    {
+                        //We can actually loop through the parents of each tile to find our exact path which we will show shortly. 
+
+                        //var tile = checkTile;
+                        ////Console.WriteLine("Retracing steps backwards...");
+                        //while (true)
+                        //{
+                        //    Console.WriteLine(
+                        //        $"{tile.Row} : {tile.Column} (Value: {tile.Risk} PreviousRisk: {tile.PreviousRisk} Risk: {tile.Risk}");
+                        //    tile = tile.Parent;
+                        //    if (tile == null)
+                        //    {
+                        //        return checkTile.PreviousRisk;
+                        //    }
+                        //}
+
+                        return checkTile.PreviousRisk;
+                    }
+
+                    _visited[checkTile.Row, checkTile.Column] = true;
+                    activeTiles.Remove(checkTile);
+
+                    var walkableTiles = GetWalkableTiles(checkTile);
+                    foreach (var walkableTile in walkableTiles)
+                    {
+                        //We have already visited this tile so we don't need to do so again!
+                        if (_visited[walkableTile.Row, walkableTile.Column])
+                        {
+                            continue;
+                        }
+
+                        //It's already in the active list, but that's OK, maybe this new tile has a better value (e.g. We might zigzag earlier but this is now straighter). 
+                        if (activeTiles.Any(x => x.Row == walkableTile.Row && x.Column == walkableTile.Column))
+                        {
+                            var existingTile = activeTiles.Single(x =>
+                                x.Row == walkableTile.Row && x.Column == walkableTile.Column);
+                            if (existingTile.PreviousRisk > walkableTile.PreviousRisk)
+                            {
+                                activeTiles.Remove(existingTile);
+                                activeTiles.Add(walkableTile);
+                            }
+                        }
+                        else
+                        {
+                            //We've never seen this tile before so add it to the list. 
+                            activeTiles.Add(walkableTile);
+                        }
+                    }
                 }
-                
-                return;
             }
 
-            //visited.Add(GetPosition(row, column));
-
-            foreach (var adjacentPoint in GetAdjacentPoints(row, column))
-            {
-                NextStep(adjacentPoint.Item1, adjacentPoint.Item2, visited, totalRisk);
-            }
-            
-            //visited.Remove(GetPosition(row, column));
-
-            return;
+            return -1;
         }
 
-        private int GetPosition(int row, int column)
+        private List<Tile> GetWalkableTiles(Tile currentTile)
         {
-            return (row + 1) * _maxColumns + (column + 1);
-        }
-
-        private IEnumerable<(int, int)> GetAdjacentPoints(int row, int column)
-        {
-            var result = new List<(int, int)>
+            var possibleTiles = new List<Tile>()
             {
-                //(row - 1, column),
-               // (row,     column - 1),
-                (row,     column + 1),
-                (row + 1, column)
+                new() { Row = currentTile.Row, Column = currentTile.Column - 1, PreviousRisk = currentTile.PreviousRisk },
+                new() { Row = currentTile.Row, Column = currentTile.Column + 1, PreviousRisk = currentTile.PreviousRisk},
+                new() { Row = currentTile.Row - 1, Column = currentTile.Column, PreviousRisk = currentTile.PreviousRisk },
+                new() { Row = currentTile.Row + 1, Column = currentTile.Column, PreviousRisk = currentTile.PreviousRisk },
             };
-
-            return result.Where(point => point.Item1 >= 0
-                                         && point.Item1 < _maxRows
-                                         && point.Item2 >= 0
-                                         && point.Item2 < _maxColumns)
-                //.OrderBy(tuple => _rows[tuple.Item1, tuple.Item2])
-                
-                ;
-        }
-        
-        private (int, int) GetMinimalAdjacentPoint(int row, int column)
-        {
-            var result = new List<(int, int)>
+            
+            possibleTiles = possibleTiles
+                .Where(tile => tile.Row >= 0 && tile.Row < _maxRows)
+                .Where(tile => tile.Column >= 0 && tile.Column < _maxColumns).ToList();
+            
+            foreach (var tile in possibleTiles)
             {
-                //(row - 1, column),
-                // (row,     column - 1),
-                (row,     column + 1),
-                (row + 1, column)
-            };
-
-            return result.Where(point => point.Item1 >= 0
-                                         && point.Item1 < _maxRows
-                                         && point.Item2 >= 0
-                                         && point.Item2 < _maxColumns)
-                .OrderBy(tuple => _rows[tuple.Item1, tuple.Item2])
-                .First()
-                ;
-        }
-
-        public int Count()
-        {
-            var result = 0;
-            for (var i = 0; i < _rows.GetLength(0); i++)
-            {
-                for (var j = 0; j < _rows.GetLength(1); j++)
-                {
-                    result += _rows[i, j] ;
-                }
+                tile.PreviousRisk += _rows[tile.Row, tile.Column];
             }
 
-            return result;
+            return possibleTiles;
         }
-        
-        public bool[,] Clone(bool[,] value)
-        {
-            var result = new bool[value.GetLength(0), value.GetLength(1)];
 
-            for (var i = 0; i < value.GetLength(0); i++)
+        public void Enlarge()
+        {
+            var newRows = new int[_maxRows * 5, _maxColumns * 5];
+
+            for (var row = 0; row < _maxRows; row++)
             {
-                for (var j = 0; j < value.GetLength(1); j++)
+                for (var co = 0; co < _maxColumns; co++)
                 {
-                    result[i, j] = value[i, j];
+                    newRows[row, co] = _rows[row, co];
                 }
             }
+            
+            for (var row = 0; row < _maxRows; row++)
+            {
+                for (var column = 0; column < _maxColumns; column++)
+                {
+                    var value = newRows[row, column];
 
-            return result;
+                    for (var times = 1; times < 5; times++)
+                    {
+                        value++;
+                        value = value > 9 ? 1 : value;
+
+                        var newRow = row + times * _maxRows;
+                        newRows[newRow, column] = value;
+                    }
+                }
+            }
+            
+            var newMaxRows = _maxRows * 5;
+            for (var row = 0; row < newMaxRows; row++)
+            {
+                for (var column = 0; column < _maxColumns; column++)
+                {
+                    var value = newRows[row, column];
+
+                    for (var times = 1; times < 5; times++)
+                    {
+                        value++;
+                        value = value > 9 ? 1 : value;
+
+                        var newColumn = column + times * _maxColumns;
+                        newRows[row, newColumn] = value;
+                    }
+                }
+            }
+            
+            _maxRows *= 5;
+            _maxColumns *= 5;
+            _rows = newRows;
+            _totalRisks = new int[_maxRows, _maxColumns];
+            _visited = new bool[_maxRows, _maxColumns];
         }
 
         public void Print()
@@ -211,11 +221,22 @@ namespace AdventOfCode.Day15
             {
                 for (var j = 0; j < _rows.GetLength(1); j++)
                 {
-                    Console.Write(_rows[i, j] );
+                    Console.Write(_rows[i, j]);
                 }
 
                 Console.WriteLine();
             }
+        }
+    }
+    record Tile
+    {
+        public int Row { get; set; }
+        public int Column { get; set; }
+        public int PreviousRisk { get; set; }
+        
+        public override string ToString()
+        {
+            return $"{Row}-{Column} (Risk: {PreviousRisk};";
         }
     }
 }

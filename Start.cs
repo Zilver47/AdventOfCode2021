@@ -1,12 +1,12 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using AdventOfCode.Day15;
+using AdventOfCode.Day22;
 
 var timer = new Stopwatch();
 timer.Start();
 
-var lines = File.ReadAllLines("Day15\\input.txt");
+var lines = File.ReadAllLines("Day22\\input.txt");
 var generator = new AnswerGenerator(lines);
             
 Console.Write("Answer 1: ");

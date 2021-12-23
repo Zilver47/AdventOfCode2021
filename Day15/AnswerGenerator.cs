@@ -209,7 +209,7 @@ namespace AdventOfCode.Day15
             _maxRows *= 5;
             _maxColumns *= 5;
             _rows = newRows;
-            _totalRisks = new int[_maxRows, _maxColumns];
+            //_totalRisks = new int[_maxRows, _maxColumns];
             _visited = new bool[_maxRows, _maxColumns];
         }
 
